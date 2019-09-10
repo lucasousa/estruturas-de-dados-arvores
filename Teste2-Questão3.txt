@@ -1,0 +1,6 @@
+%UNIDADE1
+scheme:programa
+software:programa,aplicativo
+feature:caracteristica
+pimp:programa,cafetao
+beer:cerveja,cachaca,me
