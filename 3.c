@@ -26,7 +26,6 @@ void insereArvore(arvBinWord **arv, arvBinWord *no);
 int compara(const char *s1, const char *s2); 
 arvBinWord* busca(arvBinWord *arv, char *valor);
 void copiar(char *string1, char *string2);
-
 arvBinWord *buscaNo(arvBinWord *raiz, char *ch, arvBinWord **pai);
 arvBinWord *removerNo(arvBinWord *raiz, char *ch);
 void liberar(lista *l);
