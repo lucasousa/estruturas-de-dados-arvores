@@ -34,18 +34,27 @@ void liberar(lista *l);
 
 
 
-int main(){
+int main(int argc, char **args){
     
     arv23Word *arvore;
-    arvore = criaVazia();
+    arvore = NULL;
     lista *listapromover = NULL;
     char promove[30];
-    Tratamento(&arvore, "bag:saco,meusaco\0", promove, &listapromover, NULL);
-    Tratamento(&arvore, "scheme:programa\0", promove, &listapromover, NULL);
-    Tratamento(&arvore, "software:programa,aplicativo\0", promove, &listapromover, NULL);
+    FILE *arquivo;
+    arquivo = fopen(args[1],"r");
+    char Unidade[50];
+    fscanf(arquivo,"%s",Unidade);
     
+    while(!feof(arquivo)){
+        char nfstr[100];
+        for(int i=0;i<100;i++)
+            nfstr[i]='\0';
+        fscanf(arquivo, "%s" , nfstr);
+        Tratamento(&arvore,nfstr,promove, &listapromover, NULL);
+    }
+    fclose(arquivo);
     imprime(arvore);
-    printf("\n");
+    printf("\n\n");
 
     return 0;
 }
