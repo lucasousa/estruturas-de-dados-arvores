@@ -20,14 +20,14 @@ void copiar(char *string1, char *string2);
 arv23Word *criaVazia();
 int ehfolha(arv23Word *no);
 arv23Word *alocando(char *valor, arv23Word *esq, arv23Word *cent, arv23Word *dir);
-arv23Word *adicionaNo(arv23Word *no, char *valor, arv23Word *filho);
-arv23Word *criaNo(char *valor, arv23Word *esq, arv23Word *cent, arv23Word *dir);
-arv23Word *quebraNo(arv23Word **no, char *valor, char *promover, arv23Word *subarvore);
+arv23Word *adicionaNo(arv23Word *no, char *valor, lista *l, arv23Word *filho);
+arv23Word *criaNo(char *valor, lista *l, arv23Word *esq, arv23Word *cent, arv23Word *dir);
+arv23Word *quebraNo(arv23Word **no, char *valor, char *promover, lista **lpromove, arv23Word *subarvore);
 void imprime(arv23Word *raiz);
-arv23Word *insere(arv23Word **raiz, char *valor, char *promove, arv23Word **pai);
+arv23Word *insere(arv23Word **raiz, char *valor, char *promove, lista **lpromove, arv23Word **pai);
 arv23Word *busca(arv23Word *arv, char *str); 
 
-void Tratamento(arv23Word **arv, char *var, char *promove, arv23Word **pai);
+void Tratamento(arv23Word **arv, char *var, char *promove, lista **lpromove, arv23Word **pai);
 void imprimeLista(lista *l);
 void insereLista(lista **l, char *str);
 void liberar(lista *l);
@@ -38,9 +38,11 @@ int main(){
     
     arv23Word *arvore;
     arvore = criaVazia();
+    lista *listapromover = NULL;
     char promove[30];
-    Tratamento(&arvore, "bag:saco,meusaco", promove, NULL);
-
+    Tratamento(&arvore, "bag:saco,meusaco\0", promove, &listapromover, NULL);
+    Tratamento(&arvore, "scheme:programa\0", promove, &listapromover, NULL);
+    Tratamento(&arvore, "software:programa,aplicativo\0", promove, &listapromover, NULL);
     
     imprime(arvore);
     printf("\n");
@@ -72,11 +74,11 @@ arv23Word *busca(arv23Word *arv, char *str){
 }
 
 
-void Tratamento(arv23Word **arv, char *var, char *promove, arv23Word **pai){
-    arv23Word *aux;
+void Tratamento(arv23Word **arv, char *var, char *promove, lista **lpromove, arv23Word **pai){
+    /*arv23Word *aux;
     aux = (arv23Word *)malloc(sizeof(arv23Word));
     aux->l1 = NULL; //Inicializando a lista
-    aux->l2 = NULL; //Inicializando a lista
+    aux->l2 = NULL; //Inicializando a lista*/
     int pos = 0;
     char ing[20];
 
@@ -102,7 +104,7 @@ void Tratamento(arv23Word **arv, char *var, char *promove, arv23Word **pai){
         pt[cont] = '\0';
         arv23Word *aux = busca(*arv,pt);
         if(!aux){
-            insere(arv, pt, promove, pai);
+            insere(arv, pt, promove, lpromove, pai);
             aux = busca(*arv,pt);
         }
         if(compara(aux->word1, pt) == 0)
@@ -179,15 +181,18 @@ arv23Word *alocando(char *valor, arv23Word *esq, arv23Word *cent, arv23Word *dir
 
     return no;
 }
-arv23Word *adicionaNo(arv23Word *no, char *valor, arv23Word *filho){
+arv23Word *adicionaNo(arv23Word *no, char *valor, lista *l, arv23Word *filho){
 
     if (compara(valor, no->word1) == 1){
         copiar(valor, no->word2);
+        no->l2 = l;
         no->dir = filho;
     }
     
     else{
         copiar((*no).word1, no->word2);
+        no->l2 = no->l1;
+        no->l1 = l;
         copiar(valor, no->word1);
         no->dir = no->cent;
         no->cent = filho;
@@ -196,11 +201,12 @@ arv23Word *adicionaNo(arv23Word *no, char *valor, arv23Word *filho){
     no->nInfo = 2;
     return no;
 }
-arv23Word *criaNo(char *valor, arv23Word *esq, arv23Word *cent, arv23Word *dir){
+arv23Word *criaNo(char *valor, lista *l, arv23Word *esq, arv23Word *cent, arv23Word *dir){
 
     arv23Word *no = malloc(sizeof(arv23Word));
     copiar(valor, no->word1);
-
+    no->l1 = l;
+    no->l2 = NULL;
     no->dir = dir;
     no->cent = cent;
     no->esq = esq;
@@ -208,72 +214,75 @@ arv23Word *criaNo(char *valor, arv23Word *esq, arv23Word *cent, arv23Word *dir){
 
     return no;
 }
-arv23Word *quebraNo(arv23Word **no, char *valor, char *promover, arv23Word *subarvore){
+arv23Word *quebraNo(arv23Word **no, char *valor, char *promover, lista **lpromove, arv23Word *subarvore){
     arv23Word *paux;
 
     if (compara(valor, (*no)->word2) == 1) {        //word2 está no meio e será promovido
        copiar((*no)->word2, promover);
+       *lpromove = (*no)->l2;
        paux = (*no)->dir;
        (*no)->dir = NULL;  
        (*no)->nInfo = 1;     
-       return criaNo(valor, paux, subarvore, NULL);
+       return criaNo(valor, NULL, paux, subarvore, NULL);
     }
 
     else if (compara(valor, (*no)->word1) == 1){    //valor está no meio e será promovido
-        copiar(valor, promover);      
+        copiar(valor, promover);
+        *lpromove = NULL;      
         paux = (*no)->dir;
         (*no)->nInfo = 1;
-        return criaNo((*no)->word2,subarvore,  paux, NULL);
+        return criaNo((*no)->word2, (*no)->l2,subarvore, paux, NULL);
     }
 
     else{                                           //word1 está no meio e será promovido
         arv23Word *centro, *dir;
         copiar((*no)->word1, promover);
-        paux = criaNo((*no)->word2, (*no)->cent, (*no)->dir, NULL); 
+        *lpromove = (*no)->l1;
+        paux = criaNo((*no)->word2, (*no)->l2, (*no)->cent, (*no)->dir, NULL); 
         copiar(valor, (*no)->word1);
+        (*no)->l1 = NULL;
         (*no)->nInfo = 1;
         (*no)->dir = NULL;
         (*no)->cent = subarvore;
         return paux;
     }
 }
-arv23Word *insere(arv23Word **raiz, char *valor, char *promove, arv23Word **pai){
+arv23Word *insere(arv23Word **raiz, char *valor, char *promove, lista **lpromove, arv23Word **pai){
     arv23Word *paux;
     if(*raiz == NULL){                   // Árvore Vazia
-        *raiz = criaNo(valor, NULL, NULL, NULL);
+        *raiz = criaNo(valor, NULL, NULL, NULL, NULL);
         paux = NULL;
     }
     else{
         if(ehfolha(*raiz)){
             if((**raiz).nInfo == 1){        //Folha com 1 informação
-                *raiz = adicionaNo(*raiz, valor, NULL);
+                *raiz = adicionaNo(*raiz, valor, NULL, NULL);
                 paux = NULL;
-            }
-            else                           // Folha com 2 infos
-                paux = quebraNo(raiz, valor, promove, NULL);
+            }else                           // Folha com 2 infos
+                paux = quebraNo(raiz, valor, promove, lpromove, NULL);
         }
 
         else{
             if(compara(valor, (**raiz).word1)== -1)                                    // Não folha para esquerda
-                paux = insere(&((*raiz)->esq), valor, promove, raiz);
+                paux = insere(&((*raiz)->esq), valor, promove, lpromove, raiz);
             else if(((*raiz)->nInfo == 1) || (compara(valor, (*raiz)->word2)== -1))    //Não folha para o centro
-                paux = insere(&((*raiz)->cent), valor, promove, raiz);
-            else paux = insere(&((*raiz)->dir), valor, promove, raiz);                 // não folha para a direita
+                paux = insere(&((*raiz)->cent), valor, promove, lpromove, raiz);
+            else paux = insere(&((*raiz)->dir), valor, promove, lpromove, raiz);                 // não folha para a direita
         }
     }
     if(paux != NULL){                                           //Foi inserido com resquício(nó quebrado)
         if(pai == NULL){                                        //Se não existe pai acima
-            *raiz = criaNo(promove, *raiz, paux, NULL);
+            *raiz = criaNo(promove, *lpromove, *raiz, paux, NULL);
             paux = NULL;
         }
         else if((*pai)->nInfo == 1){                           //Se existe um pai e ele tem espaço
-            *pai = adicionaNo(*pai, promove, paux);
+            *pai = adicionaNo(*pai, promove, *lpromove, paux);
             paux = NULL;
         }
         else{
             char guardar[30];
-            copiar(promove,guardar);
-            paux = quebraNo(pai, guardar, promove, paux);     // Se existe um pai mas não tem espaço
+            copiar(promove, guardar);
+            paux = quebraNo(pai, guardar, promove, lpromove, paux);     // Se existe um pai mas não tem espaço
         }     
     }
     return paux;
