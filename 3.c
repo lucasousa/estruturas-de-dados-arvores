@@ -19,7 +19,7 @@ typedef struct arvBinWord{
 arvBinWord *criaVazia();
 int esqDir(char *add, char *comp);
 void insereLista(lista **l, char *str);
-arvBinWord *Tratamento(arvBinWord **arv, char *var);
+void Tratamento(arvBinWord **arv, char *var);
 void imprimeLista(lista *l);
 void imprime(arvBinWord *arvore);
 void insereArvore(arvBinWord **arv, arvBinWord *no);
@@ -29,36 +29,64 @@ void copiar(char *string1, char *string2);
 arvBinWord *buscaNo(arvBinWord *raiz, char *ch, arvBinWord **pai);
 arvBinWord *removerNo(arvBinWord *raiz, char *ch);
 void liberar(lista *l);
+int menu(int *op);
+
 
 int main(int argc, char **args){
     arvBinWord *arvore;
     arvore = criaVazia();
     FILE *arquivo;
-    arquivo = fopen(args[1],"r");
     char Unidade[50];
-    fscanf(arquivo,"%s",Unidade);
-    //printf("%s\n",Unidade);
     
-    while(!feof(arquivo)){
-        char nfstr[100];
-        for(int i=0;i<100;i++)
-            nfstr[i]='\0';
-        fscanf(arquivo, "%s" , nfstr);
-        //printf("%s\n",nfstr);
-        Tratamento(&arvore,nfstr);
+    int p;
+    while(menu(&p)){
+        char palavra[30];
+        switch(p){
+            case 1:
+                printf("Digite o nome do arquivo que contém a unidade >> ");scanf("%s",Unidade);
+                arquivo = fopen(Unidade, "r");
+                fscanf(arquivo,"%s",Unidade);
+                while(!feof(arquivo)){
+                    char nfstr[100];
+                    for(int i=0;i<100;i++)
+                        nfstr[i]='\0';
+                    fscanf(arquivo, "%s" , nfstr);
+                    Tratamento(&arvore,nfstr);
+                }
+            break;
+            case 2:
+                imprime(arvore);
+            break;
+            case 3:
+                printf("Digite a palavra a ser buscada >> "); scanf("%s",palavra);
+            break;
+            case 4:
+                printf("Digite a palavra a ser removida >> "); scanf("%s",palavra);
+                arvore = removerNo(arvore, palavra);
+            break;
+            default:
+            break;
+        }
     }
-    printf("Procurando a palavra PROGRAMA e imprimindo sua lista correspondente \n");
-    imprimeLista(busca(arvore,"programa")->lista);
-    printf("\n");
-    printf("Removendo a palavra PROGRAMA e imprimindo a arvore novamente \n");
     arvore = removerNo(arvore, "programa");
     fclose(arquivo);
-    imprime(arvore);
+   
     printf("\n\n");
 
     return 0;
 }
 
+int menu(int *op){
+    printf(" _______________________________ \n");
+    printf("| 1 - Ler uma unidade           |\n");
+    printf("| 2 - Mostrar todas as palavras |\n");
+    printf("| 3 - Buscar uma palavra        |\n");
+    printf("| 4 - Remover uma palavra       |\n");
+    printf("| 0 - Sair                      |\n");
+    printf("|_______________________________|\n");
+    scanf("%d",op);
+    return *op;
+}
 
 
 arvBinWord *criaVazia(){
@@ -92,7 +120,7 @@ arvBinWord* criaNo(char* valor,char* ing){
     return no;
 }
 
-arvBinWord *Tratamento(arvBinWord **arv, char *var){
+void Tratamento(arvBinWord **arv, char *var){
     arvBinWord *aux;
     aux = (arvBinWord *)malloc(sizeof(arvBinWord));
     aux->lista = NULL; //Inicializando a lista
@@ -125,8 +153,6 @@ arvBinWord *Tratamento(arvBinWord **arv, char *var){
         else
             insereLista(&(aux->lista),ing);
     }
-
-
 }
 
 void insereArvore(arvBinWord **arv, arvBinWord *no){
@@ -151,14 +177,11 @@ void insereLista(lista **l, char *str){
 
 void imprime(arvBinWord *arvore){
     if(arvore){
-        printf("<");
-        printf("%s ", arvore->word);
-        printf("(");
-        imprimeLista(arvore->lista);
-        printf(")");
         imprime(arvore->esq);
+        printf("%s: ", arvore->word);
+        imprimeLista(arvore->lista);
+        puts("");
         imprime(arvore->dir);
-        printf(">");
     }
 }
 
@@ -167,8 +190,7 @@ void imprimeLista(lista *l){
     else{
         printf("%s ", l->info);
         imprimeLista(l->prox);
-    }
-    
+    } 
 }
 
 arvBinWord* busca(arvBinWord *arv, char *valor){
