@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-
+#define TAM 15000
 
 typedef struct arvBin{
 	int info;
@@ -18,7 +18,9 @@ int ehFolha(arvBin *arv);
 void imprime(arvBin *arvore);
 int minDep(arvBin *arv);
 void liberar(arvBin *arv);
-arvBin* busca(arvBin *arv, int elem);
+int busca(arvBin *arv, int elem);
+int *aleatorio();
+
 
 int main(){
     srand(time(NULL));
@@ -26,53 +28,74 @@ int main(){
     arvore = criaVazia();
     int *vet = (int*)calloc(sizeof(int), 1000);
     float *tempo = (float*)malloc(sizeof(float)* 30);
-    float *tempobusca = (float*)malloc(sizeof(float)* 30);
+    double *tempobusca = (double*)malloc(sizeof(double)* 30);
     int maxdep, mindep;
+
+    int *ale;
+
     clock_t start, finish;
     for(int i=0; i<30;i++){
         arvore = criaVazia();
+        ale = aleatorio();  
         start=clock();
-        for(int j=0; j<1000;j++){
-            int n = rand() % 10000;
-            insere(&arvore, criaNo(n));
+        for(int j=0; j<TAM;j++){
+            insere(&arvore, criaNo(ale[j]));
         }
         finish=clock();
+
         maxdep = maxDep(arvore);
         mindep = minDep(arvore);
         tempo[i] = (finish-start)*1000/CLOCKS_PER_SEC;
+
         printf("---------Teste %d----------",i+1);
         printf("\nMax Depth %d || ", maxdep);
         printf("Min Depth %d \n", mindep);
+        
+        int b;
         start=clock();
-        busca(arvore,5000);
+        b = busca(arvore, 50000);
         finish=clock();
-        tempobusca[i] = (finish-start)*1000/CLOCKS_PER_SEC;
 
+        tempobusca[i] = ((double)(finish - start))*1000/CLOCKS_PER_SEC;
         vet[maxdep-mindep]++;
         liberar(arvore);
     }
+
     printf("\n\n");
     for (int i = 0; i < 1000; i++)
         if(vet[i]!=0)
             printf("Diferença  %d >> %d ocorrências\n",i,vet[i]);
     puts("\n");
-    for(int i = 0; i < 30; i++){
-        printf("-----------------Teste %d------------\nTempo de Criação %f >> Tempo de busca %f\n",i+1,tempo[i],tempobusca[i]);
+    for(int i = 0; i<30; i++){
+        printf("-----------------Teste %d------------\nTempo de Criação %f >> Tempo de busca %lf \n", i+1,tempo[i],tempobusca[i]);
     }
+
     printf("\n\n");
-    
-
-
     return 0;
 }
 
-arvBin* busca(arvBin *arv, int elem) {
-    if (!arv || arv->info == elem)
-       return arv;
-    if (arv->info > elem)
-       return busca(arv->esq, elem);
-    else
-       return busca(arv->dir, elem);
+int *aleatorio(){
+    int *ptr;
+    ptr = (int*)malloc(sizeof(int)*TAM);
+    for(int i=0; i<TAM; i++){
+        ptr[i] = rand() % (TAM + (TAM/2) );
+    }
+    return ptr;
+}
+
+int busca(arvBin *raiz, int Valor){
+    int find = -1;
+
+    if (raiz != NULL)
+    {
+        if (raiz->info == Valor)
+            find = Valor;
+        else if (raiz->info > Valor)
+            find = busca(raiz->esq, Valor);
+        else
+            find = busca(raiz->dir, Valor);
+    }
+    return find;
 }
 
 arvBin *criaVazia(){

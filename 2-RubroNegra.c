@@ -3,6 +3,8 @@
 #include<time.h>
 #define BLACK 1
 #define RED 0
+#define TAM 15000
+
 
 typedef struct RubroNegra{
     int info;
@@ -10,6 +12,7 @@ typedef struct RubroNegra{
     struct RubroNegra *esq, *dir;
 }RubroNegra;
 
+int *aleatorio();
 RubroNegra *rotacaoDir(RubroNegra *arvore);
 RubroNegra *rotacaoEsq(RubroNegra *arvore);
 int cor(RubroNegra *arvore);
@@ -32,17 +35,17 @@ int main(){
 
     int *vet = (int*)calloc(sizeof(int), 1000);
     float *tempo = (float*)malloc(sizeof(float)* 30);
-    float *tempobusca = (float*)malloc(sizeof(float)* 30);
+    double *tempobusca = (double*)malloc(sizeof(double)* 30);
 
     int maxdep, mindep;
-
+    int *ale;
     clock_t start, finish;
     for(int i=0; i<30;i++){
+        ale = aleatorio();
         arvore = NULL;
         start=clock();
-        for(int j=0; j<1000;j++){
-            int n = rand() % 10000;
-            insereRubroNegra(&arvore, n);
+        for(int j=0; j<TAM;j++){
+            insereRubroNegra(&arvore, ale[j]);
         }
         finish=clock();
 
@@ -55,10 +58,10 @@ int main(){
         printf("Min Depth %d \n", mindep);
 
         start=clock();
-        busca(arvore,5000);
+        busca(arvore,50000);
         finish=clock();
 
-        tempobusca[i] = (finish-start)*1000/CLOCKS_PER_SEC;
+        tempobusca[i] = ((double)(finish - start)) * 1000 / CLOCKS_PER_SEC;
 
         vet[maxdep-mindep]++;
         liberar(arvore);
@@ -70,7 +73,7 @@ int main(){
             printf("Diferença  %d >> %d ocorrências\n",i,vet[i]);
     puts("\n");
     for(int i = 0; i < 30; i++){
-        printf("-----------------Teste %d------------\nTempo de Criação %f >> Tempo de busca %f\n",i+1,tempo[i],tempobusca[i]);
+        printf("-----------------Teste %d------------\nTempo de Criação %f >> Tempo de busca %lf\n",i+1,tempo[i],tempobusca[i]);
     }
     printf("\n\n");
 
@@ -78,7 +81,15 @@ int main(){
     return 0;
 }
 
-
+int *aleatorio(){
+    int *ptr;
+    ptr = (int *)malloc(sizeof(int) * TAM);
+    for (int i = 0; i < TAM; i++)
+    {
+        ptr[i] = rand() % (TAM + (TAM / 2));
+    }
+    return ptr;
+}
 
 int cor(RubroNegra *arvore){
     if(arvore == NULL) return BLACK;

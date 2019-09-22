@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+#define TAM 15000
 
 typedef struct arvAVL{
     int info;
@@ -24,6 +25,7 @@ void rotacaoRL(arvAVL **arv);
 void rotacaoLR(arvAVL **arv);
 void insercao(arvAVL **raiz, arvAVL *No);
 int maiorAltura(arvAVL *arv);
+int *aleatorio();
 
 int main(){
     srand(time(NULL));
@@ -31,15 +33,17 @@ int main(){
     arvore = criaVazia();
     int *vet = (int*)calloc(sizeof(int), 1000);
     float *tempo = (float*)malloc(sizeof(float)* 30);
-    float *tempobusca = (float*)malloc(sizeof(float)* 30);
+    double *tempobusca = (double*)malloc(sizeof(double)* 30);
     int maxdep, mindep;
+    int *ptr;
+
     clock_t start, finish;
     for(int i=0; i<30;i++){
         arvore = criaVazia();
         start=clock();
-        for(int j=0; j<1000;j++){
-            int n = rand() % 10000;
-            insere(&arvore, criaNo(n));
+        ptr = aleatorio();
+        for(int j=0; j<TAM;j++){
+            insere(&arvore, criaNo(ptr[j]));
         }
         finish=clock();
         maxdep = maxDep(arvore);
@@ -49,9 +53,9 @@ int main(){
         printf("\nMax Depth %d || ", maxdep);
         printf("Min Depth %d \n", mindep);
         start=clock();
-        busca(arvore,5000);
+        busca(arvore,50000);
         finish=clock();
-        tempobusca[i] = (finish-start)*1000/CLOCKS_PER_SEC;
+        tempobusca[i] = ( (double)(finish-start))*1000/CLOCKS_PER_SEC;
 
         vet[maxdep-mindep]++;
         liberar(arvore);
@@ -62,10 +66,20 @@ int main(){
             printf("Diferença  %d >> %d ocorrências\n",i,vet[i]);
     puts("\n");
     for(int i = 0; i < 30; i++){
-        printf("-----------------Teste %d------------\nTempo de Criação %f >> Tempo de busca %f\n",i+1,tempo[i],tempobusca[i]);
+        printf("-----------------Teste %d------------\nTempo de Criação %f >> Tempo de busca %lf\n",i+1,tempo[i],tempobusca[i]);
     }
     printf("\n\n");
 
+}
+
+int *aleatorio(){
+    int *ptr;
+    ptr = (int *)malloc(sizeof(int) * TAM);
+    for (int i = 0; i < TAM; i++)
+    {
+        ptr[i] = rand() % (TAM + (TAM / 2));
+    }
+    return ptr;
 }
 
 void rotacaoRR(arvAVL **arv){
