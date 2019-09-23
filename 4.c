@@ -15,6 +15,11 @@ typedef struct arv23Word{
     struct lista *l1, *l2;
 }arv23Word;
 
+int menu(int *op);
+void maiorInfoEsq(arv23Word *raiz, arv23Word **no, arv23Word **paiNo);
+void menorInfoDir(arv23Word *raiz, arv23Word **no, arv23Word **paiNo);
+void copyList(lista **l, lista *lis);
+int arvore23Remover(arv23Word **raiz, char *palavra, arv23Word **pai);
 int compara(const char *s1, const char *s2);
 void copiar(char *string1, char *string2);
 arv23Word *criaVazia();
@@ -30,35 +35,77 @@ arv23Word *busca(arv23Word *arv, char *str);
 void Tratamento(arv23Word **arv, char *var, char *promove, lista **lpromove, arv23Word **pai);
 void imprimeLista(lista *l);
 void insereLista(lista **l, char *str);
-void liberar(lista *l);
+void liberar(lista **l);
 
 
 
 int main(int argc, char **args){
-    
     arv23Word *arvore;
     arvore = NULL;
     lista *listapromover = NULL;
     char promove[30];
     FILE *arquivo;
-    arquivo = fopen(args[1],"r");
     char Unidade[50];
-    fscanf(arquivo,"%s",Unidade);
-    
-    while(!feof(arquivo)){
-        char nfstr[100];
-        for(int i=0;i<100;i++)
-            nfstr[i]='\0';
-        fscanf(arquivo, "%s" , nfstr);
-        Tratamento(&arvore,nfstr,promove, &listapromover, NULL);
+    char palavra[50];
+    arv23Word **pai = (arv23Word **)malloc(sizeof(arv23Word *));
+    *pai = NULL;
+
+    int p;
+    while (menu(&p)){
+        char palavra[30];
+        switch (p){
+            case 1:
+                printf("Digite o nome do arquivo que contém a unidade >> ");
+                scanf("%s", Unidade);
+                arquivo = fopen(Unidade, "r");
+                fscanf(arquivo, "%s", Unidade);
+                while (!feof(arquivo))
+                {
+                    char nfstr[100];
+                    for (int i = 0; i < 100; i++)
+                        nfstr[i] = '\0';
+                    fscanf(arquivo, "%s", nfstr);
+                    Tratamento(&arvore, nfstr, promove, &listapromover, NULL);
+                }
+                break;
+            case 2:
+                imprime(arvore);
+                printf("\n");
+                break;
+            case 3:
+                printf("Digite a palavra a ser buscada >> ");
+                setbuf(stdin, NULL);
+                scanf("%s", palavra);
+                break;
+            case 4:
+                printf("Digite a palavra a ser removida >> ");
+                setbuf(stdin,NULL);
+                scanf("%s", palavra);
+                arvore23Remover(&arvore, palavra, pai);
+                break;
+                
+            default:
+                break;
+        }
     }
     fclose(arquivo);
-    imprime(arvore);
+
     printf("\n\n");
 
     return 0;
 }
-
+int menu(int *op)
+{
+    printf(" _______________________________ \n");
+    printf("| 1 - Ler uma unidade           |\n");
+    printf("| 2 - Mostrar todas as palavras |\n");
+    printf("| 3 - Buscar uma palavra        |\n");
+    printf("| 4 - Remover uma palavra       |\n");
+    printf("| 0 - Sair                      |\n");
+    printf("|_______________________________|\n");
+    scanf("%d", op);
+    return *op;
+}
 arv23Word *busca(arv23Word *arv, char *str){
     if(!arv)
         return NULL;
@@ -141,11 +188,6 @@ void insereLista(lista **l, char *str){
     }else
         insereLista(&((*l)->prox), str);
 }
-
-
-
-
-
 
 
 void copiar(char *string1, char *string2){ //copia string1 para string2
@@ -300,7 +342,7 @@ void imprime(arv23Word *raiz){
     if(raiz){
         printf("<");
         if(raiz->nInfo == 2){
-            printf("%s ",raiz->word1);
+            printf("%s ", raiz->word1);
             printf("{"); imprimeLista(raiz->l1); printf("}");
             printf("|| %s",raiz->word2);
             printf("{"); imprimeLista(raiz->l2); printf("}");
@@ -314,158 +356,287 @@ void imprime(arv23Word *raiz){
         printf(">");
     }
 }
-
-
-/* 
-char* menorinfodir(arv23Word *raiz){
-    if(ehfolha(raiz)) return raiz->word1;
-    else return menorinfodir(raiz->esq);
+void liberar(lista **lista){
+    if (*lista != NULL){
+        liberar(&(*lista)->prox);
+        free(*lista);
+    }
+    *lista = NULL;
 }
-char* maiorinfoesq(arv23Word* raiz){
-    if(ehfolha(raiz)){
-        if (raiz->nInfo == 2) return raiz->word2;
-        else return raiz->word1;
-    }else{
-        if(raiz->nInfo == 2) return maiorinfoesq(raiz->dir);
-        else return maiorinfoesq(raiz->cent);
+void menorInfoDir(arv23Word *raiz, arv23Word **no, arv23Word **paiNo)
+{
+    if (raiz->esq != NULL)
+    {
+        *paiNo = raiz;
+        menorInfoDir(raiz->esq, no, paiNo);
+    }
+    else
+    {
+        *no = raiz;
     }
 }
 
-int remover(arv23Word **raiz, char *valor, arv23Word **pai){
-    int removeu=0;
-    if(*raiz == NULL) // árvore vazia
-        return 0;
-    
-    if(ehfolha(*raiz)){ //nó atual é uma folha(caso bosta)
-        if((*raiz)->nInfo == 2 ){   // folha com 2 infos
-            if(compara((*raiz)->word2, valor) == 0){
-                copiar("",(*raiz)->word2);
-                (*raiz)->nInfo--;
-                removeu = 1;
+void maiorInfoEsq(arv23Word *raiz, arv23Word **no, arv23Word **paiNo)
+{
+    if (raiz->dir != NULL)
+    {
+        *paiNo = raiz;
+        maiorInfoEsq(raiz->dir, no, paiNo);
+    }
+    else
+    {
+        *no = raiz;
+    }
+}
+
+void copyList(lista **l, lista *lis){
+    if (lis != NULL)
+    {
+        insereLista(l, lis->info);
+        copyList(l, lis->prox);
+    }
+}
+
+int arvore23Remover(arv23Word **raiz, char *palavra, arv23Word **pai){
+    int removeu = 0;
+    arv23Word *no = NULL, *no1, *paiNo = NULL, *paiNo1 = NULL, **aux;
+    aux = (arv23Word **)malloc(sizeof(arv23Word *));
+    no1 = (arv23Word *)malloc(sizeof(arv23Word));
+    if (*raiz != NULL){
+        if (ehfolha(*raiz))
+        {
+            if ((*raiz)->nInfo == 2)
+            {
+                if (compara(palavra, (*raiz)->word2) == 0){
+                    copiar(" ", (*raiz)->word2);
+                    liberar(&(*raiz)->l2);
+                    (*raiz)->nInfo = 1;
+                    removeu = 1;
+                }
+                else if (compara(palavra, (*raiz)->word1) == 0)
+                {
+                    copiar((*raiz)->word2, (*raiz)->word1);
+                    liberar(&(*raiz)->l1);
+                    copyList(&(*raiz)->l1, (*raiz)->l2);
+                    liberar(&(*raiz)->l2);
+                    copiar(" ", (*raiz)->word2);
+                    (*raiz)->nInfo = 1;
+                    removeu = 1;
+                }
             }
-            else if(compara((*raiz)->word1, valor) == 0){
-                copiar((*raiz)->word2,(*raiz)->word1);
-                copiar("",(*raiz)->word2);
-                (*raiz)->nInfo--;
-                removeu = 1;
-            }
-        }else{  //folha com 1 info
-            if(compara((*raiz)->word1, valor) == 0){ // valor encontrado
-                if(*pai == NULL){ // sem pai(raiz da arvore)
+            else if (compara(palavra, (*raiz)->word1) == 0)
+            {
+                if (*pai == NULL)
+                {
                     free(*raiz);
                     *raiz = NULL;
                     removeu = 1;
-                }else if(*raiz == (*pai)->esq){ //estou no filho da esquerda?
+                }
+                else if (*raiz == (*pai)->esq)
+                {
                     copiar((*pai)->word1, (*raiz)->word1);
-                    copiar(menorInfoDir((*pai)->cent, &no, &paiNo),(*pai)->word1);
+                    liberar(&(*raiz)->l1);
+                    copyList(&(*raiz)->l1, (*pai)->l1);
+                    paiNo = *pai;
+                    menorInfoDir((*pai)->cent, &no, &paiNo);
+                    copiar(no->word1, (*pai)->word1);
+                    liberar(&(*pai)->l1);
+                    copyList(&(*pai)->l1, no->l1);
                     removeu = 1;
-                    if(no->nInfo == 2){
+                    if (no->nInfo == 2)
+                    {
                         copiar(no->word2, no->word1);
-                        no->word2 =  0;
-                        no->nInfo == 1;
+                        liberar(&no->l1);
+                        copyList(&no->l1, no->l2);
+                        copiar(" ", no->word2);
+                        liberar(&no->l2);
+                        no->nInfo = 1;
                     }
-                    else{
-                        if(paiNo->nInfo == 1){
-                            copiar(no->word1, (*raiz)->word2 );
+                    else
+                    {
+                        if (paiNo->nInfo == 1)
+                        {
+                            copiar(no->word1, (*raiz)->word2);
+                            liberar(&(*raiz)->l2);
+                            copyList(&(*raiz)->l2, no->l1);
                             (*raiz)->nInfo = 2;
+                            liberar(&no->l1);
                             free(no);
                             *pai = *raiz;
-                            removeu = 1;
+                        }
+                        else
+                        {
+                            copiar(paiNo->word2, no->word1);
+                            liberar(&no->l1);
+                            copyList(&no->l1, paiNo->l2);
+                            paiNo1 = paiNo;
+                            menorInfoDir(paiNo->dir, &no1, &paiNo1);
+                            copiar(no1->word1, paiNo->word2);
+                            liberar(&paiNo->l2);
+                            copyList(&paiNo->l2, no1->l1);
+                            if (no1->nInfo == 2)
+                            {
+                                copiar(no1->word2, no1->word1);
+                                liberar(&no1->l1);
+                                copyList(&no1->l1, no1->l2);
+                                copiar(" ", no1->word2);
+                                liberar(&no1->l2);
+                                no1->nInfo = 1;
+                            }
+                            else
+                            {
+                                copiar(paiNo->word2, no->word2);
+                                liberar(&no->l2);
+                                copyList(&no->l2, paiNo->l2);
+                                no->nInfo = 2;
+                                copiar(" ", paiNo->word2);
+                                liberar(&paiNo->l2);
+                                paiNo->nInfo = 1;
+                                liberar(&no1->l1);
+                                liberar(&no1->l2);
+                                free(no1);
+                                paiNo1->dir = NULL;
+                            }
                         }
                     }
                 }
-            }
-
-        else{
-            copiar(no->word1, (*pai)->word1);
-            copiar(no->word1, (*pai)->word2);
-            paiNo->word2 = menorInfoDir((*paiNo->dir, &no1, &paiNo));
-
-            if (no1->nInfo == 2){
-                copiar(no1->word1, no1->word2);
-                no1->nInfo = 1;
-            }
-            else{
-                copiar(paiNo->word2, no->word2);
-                paiNo->word2 = 0;
-                free(no);
-            }
-        }
-
-        else if(*raiz ==  (*pai)->cent){
-            removeu = 1;
-            if((*pai)->nInfo == 1){
-                if( ((*pai)->esq)->nInfo == 2){
-                    copiar((*pai)->word2, (*raiz)->word1);
-                    copiar((*pai)->esq->word2, (*pai)->word1);
-                    (*pai)->esq->word2 = 0;
-                    (*pai)->esq->nInfo = 1;
-                }
-                else{
-                    copiar((*pai)->word1, ((*pai)->esq)->word2);
-                    free(*raiz);
-                    ((*pai)->esq)->nInfo = 2;
-                    *pai = (*pai)->esq;
-                }
-            }
-            
-            else{
-                copiar((*pai)->word2, (*raiz)->word1);
-                (*pai)->word2 = menorInfoDir((*pai)->dir, &no, &paiNo);
-                if(no->nInfo == 2){
-                    copiar(no->word2, no->word1);
-                    no->word2 = 0;
-                    no->nInfo = 1;
-                }
-                else{
-                    copiar((*pai)->word2, (*raiz)->word2);
-                    (*pai)->word2 = 0;
-                    (*pai)->nInfo =1;
-                    free(no);
-                    (*pai)->dir = NULL;
-                }
-            }
-        }
-        else{
-            removeu = 1;
-            info = maiorInfoEsq((*pai)->cent, &no, &paiNo);
-            if(no->nInfo == 1){
-                copiar((*pai)->word2, no->word2);
-                *pai)->word2 = 0;
-                *pai)->nInfo = 1;
-                no->nInfo = 2;
-                free(*raiz);
-                *raiz = NULL;
-            }
-            else{
-                copiar((*pai)->word2, (*raiz)->word1);
-                copiar(info, (*pai)->word2);
-                no->word2 = 0;
-                no->nInfo = 1;
-            }
-        }
-
-        else{
-            if(compara(valor, (*raiz)->word1) == -1)
-                removeu = remover( &((*raiz)->esq), valor, raiz);
-            else if(compara(valor, (*raiz)->word1) == 0){
-                (*raiz)->word1 = menorInfoDir((*raiz)->cent, &no, &paiNo);
-                remover(&((*raiz)->cent), (*raiz)->word1, raiz);
-                removeu = 1;
-            }
-            else{
-                if((*raiz)->nInfo == 1 || compara(valor, (*raiz)->word2)) == -1)
-                    removeu = remover(&((*raiz)->cent), valor, raiz);
-                else if(compara(valor, (*raiz)->word2) == 0){
-                    (*raiz)->word2 = menorInfoDir((*raiz)->dir, &no, &paiNo);
-                    remover(&((*raiz)->dir), (*raiz)->word2, raiz);
+                else if (*raiz == (*pai)->cent)
+                {
                     removeu = 1;
+                    if ((*pai)->nInfo == 1)
+                    {
+                        if (((*pai)->esq)->nInfo == 2)
+                        {
+                            copiar((*pai)->word1, (*raiz)->word1);
+                            liberar(&(*raiz)->l1);
+                            copyList(&(*raiz)->l1, (*pai)->l1);
+                            copiar(((*pai)->esq)->word2, (*pai)->word1);
+                            liberar(&(*pai)->l1);
+                            copyList(&(*pai)->l1, ((*pai)->esq)->l2);
+                            copiar(" ", ((*pai)->esq)->word2);
+                            liberar(&((*pai)->esq)->l2);
+                            ((*pai)->esq)->nInfo = 1;
+                        }
+                        else
+                        {
+                            copiar((*pai)->word1, ((*pai)->esq)->word2);
+                            liberar(&((*pai)->esq)->l2);
+                            copyList(&((*pai)->esq)->l2, (*pai)->l1);
+                            liberar(&(*raiz)->l1);
+                            liberar(&(*raiz)->l2);
+                            free(*raiz);
+                            ((*pai)->esq)->nInfo = 2;
+                            *aux = (*pai)->esq;
+                            liberar(&(*pai)->l1);
+                            liberar(&(*pai)->l1);
+                            free(*pai);
+                            *pai = *aux;
+                        }
+                    }
+                    else
+                    {
+                        copiar((*pai)->word2, (*raiz)->word1);
+                        liberar(&(*raiz)->l1);
+                        copyList(&(*raiz)->l1, (*pai)->l2);
+                        paiNo = *pai;
+                        menorInfoDir((*pai)->dir, &no, &paiNo);
+                        copiar(no->word1, (*pai)->word2);
+                        liberar(&(*pai)->l2);
+                        copyList(&(*pai)->l2, no->l1);
+                        if (no->nInfo == 2)
+                        {
+                            copiar(no->word2, no->word1);
+                            liberar(&no->l1);
+                            copyList(&no->l1, no->l2);
+                            copiar(" ", no->word2);
+                            liberar(&no->l2);
+                            no->nInfo = 1;
+                        }
+                        else
+                        {
+                            (*raiz)->nInfo = 2;
+                            copiar((*pai)->word2, (*raiz)->word2);
+                            liberar(&(*raiz)->l2);
+                            copyList(&(*raiz)->l2, (*pai)->l2);
+                            copiar(" ", (*pai)->word2);
+                            liberar(&(*pai)->l2);
+                            (*pai)->nInfo = 1;
+                            free(no);
+                            (*pai)->dir = NULL;
+                        }
+                    }
                 }
                 else
-                    removeu = remover(&((*raiz)->dir), valor, raiz);
+                {
+                    removeu = 1;
+                    paiNo = *pai;
+                    maiorInfoEsq((*pai)->cent, &no, &paiNo);
+                    if (no->nInfo == 1)
+                    {
+                        copiar((*pai)->word2, no->word2);
+                        liberar(&no->l2);
+                        copyList(&no->l2, (*pai)->l2);
+                        copiar(" ", (*pai)->word2);
+                        liberar(&(*pai)->l2);
+                        (*pai)->nInfo = 1;
+                        no->nInfo = 2;
+                        free(*raiz);
+                        *raiz = NULL;
+                    }
+                    else
+                    {
+                        copiar((*pai)->word2, (*raiz)->word1);
+                        liberar(&(*raiz)->l1);
+                        copyList(&(*raiz)->l1, (*pai)->l2);
+                        copiar(no->word2, (*pai)->word2);
+                        liberar(&(*pai)->l2);
+                        copyList(&(*pai)->l2, no->l2);
+                        copiar(" ", no->word2);
+                        liberar(&no->l2);
+                        no->nInfo = 1;
+                    }
                 }
+            }
+        }
+        else
+        {
+            if (compara(palavra, (*raiz)->word1) == -1)
+            {
+                removeu = arvore23Remover(&(*raiz)->esq, palavra, raiz);
+            }
+            else if (compara(palavra, (*raiz)->word1) == 0)
+            {
+                paiNo = *raiz;
+                menorInfoDir((*raiz)->cent, &no, &paiNo);
+                copiar(no->word1, (*raiz)->word1);
+                liberar(&(*raiz)->l1);
+                copyList(&(*raiz)->l1, no->l1);
+                imprime(*raiz);
+                printf("\n");
+                arvore23Remover(&(*raiz)->cent, (*raiz)->word1, raiz);
+                printf("\n");
+                imprime(*raiz);
+                removeu = 1;
+            }
+            else if ((*raiz)->nInfo== 1 || compara(palavra, (*raiz)->word2) == -1)
+            {
+                removeu = arvore23Remover(&(*raiz)->cent, palavra, raiz);
+            }
+            else if (compara(palavra, (*raiz)->word2)==0)
+            {
+                paiNo = *pai;
+                menorInfoDir((*pai)->dir, &no, &paiNo);
+                copiar(no->word1, (*raiz)->word2);
+                liberar(&(*raiz)->l2);
+                copyList(&(*raiz)->l2, no->l1);
+                arvore23Remover(&(*raiz)->dir, (*raiz)->word2, raiz);
+                removeu = 1;
+            }
+            else
+            {
+                removeu = arvore23Remover(&(*raiz)->dir, palavra, raiz);
             }
         }
     }
-} */
-
+    return removeu;
+}
