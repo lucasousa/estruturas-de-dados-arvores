@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include<time.h>
 
 typedef struct lista{
     char info[20];
@@ -31,12 +32,13 @@ arv23Word *quebraNo(arv23Word **no, char *valor, char *promover, lista **lpromov
 void imprime(arv23Word *raiz);
 arv23Word *insere(arv23Word **raiz, char *valor, char *promove, lista **lpromove, arv23Word **pai);
 arv23Word *busca(arv23Word *arv, char *str); 
+void liberarv();
 
 void Tratamento(arv23Word **arv, char *var, char *promove, lista **lpromove, arv23Word **pai);
 void imprimeLista(lista *l);
 void insereLista(lista **l, char *str);
 void liberar(lista **l);
-
+void insercaoListas(arv23Word **arv, char *var);
 
 
 int main(int argc, char **args){
@@ -44,28 +46,57 @@ int main(int argc, char **args){
     arvore = NULL;
     lista *listapromover = NULL;
     char promove[30];
-    FILE *arquivo;
+    FILE *arquivo, *arq2;
+    char Unidadenome[50];
     char Unidade[50];
     char palavra[50];
     arv23Word **pai = (arv23Word **)malloc(sizeof(arv23Word *));
     *pai = NULL;
+    clock_t finish, start;
+
 
     int p;
     while (menu(&p)){
+        double vettempos[30];
         char palavra[30];
         switch (p){
             case 1:
                 printf("Digite o nome do arquivo que contém a unidade >> ");
                 scanf("%s", Unidade);
-                arquivo = fopen(Unidade, "r");
-                fscanf(arquivo, "%s", Unidade);
-                while (!feof(arquivo))
-                {
-                    char nfstr[100];
-                    for (int i = 0; i < 100; i++)
-                        nfstr[i] = '\0';
-                    fscanf(arquivo, "%s", nfstr);
-                    Tratamento(&arvore, nfstr, promove, &listapromover, NULL);
+                for (int i = 0; i < 30; i++){
+                    start = clock();
+                    arquivo = fopen(Unidade, "r");
+                    fscanf(arquivo, "%s", Unidadenome);
+                    while (!feof(arquivo))
+                    {
+                        char nfstr[100];
+                        for (int i = 0; i < 100; i++)
+                            nfstr[i] = '\0';
+                        fscanf(arquivo, "%s", nfstr);
+                        Tratamento(&arvore, nfstr, promove, &listapromover, NULL);
+                    }
+                    fclose(arquivo);
+                    arq2 = fopen(Unidade,"r");
+                    fscanf(arq2, "%s", Unidadenome);
+                    while (!feof(arq2))
+                    {
+                        char nfstr[100];
+                        for (int i = 0; i < 100; i++)
+                            nfstr[i] = '\0';
+                        fscanf(arq2, "%s", nfstr);
+                        insercaoListas(&arvore, nfstr);
+                    }
+                    fclose(arq2);
+                    finish = clock();
+                    printf("\n%lf\n",(double)(finish-start)*1000/CLOCKS_PER_SEC);
+                    start = clock();
+                    busca(arvore,"zzzxx");
+                    finish = clock();
+                    vettempos[i] = (double)(finish-start)*1000/CLOCKS_PER_SEC;
+                    arvore = NULL;
+                }
+                for(int i=0;i<30;i++){
+                    printf("\n%lf\n",vettempos[i]);
                 }
                 break;
             case 2:
@@ -76,6 +107,13 @@ int main(int argc, char **args){
                 printf("Digite a palavra a ser buscada >> ");
                 setbuf(stdin, NULL);
                 scanf("%s", palavra);
+                arv23Word* aux = busca(arvore, palavra);
+                if(!aux)
+                    printf("Palavra não encontrada!\n");
+                else if(!compara(aux->word1, palavra))
+                    imprimeLista(aux->l1);
+                else
+                    imprimeLista(aux->l2);
                 break;
             case 4:
                 printf("Digite a palavra a ser removida >> ");
@@ -94,8 +132,7 @@ int main(int argc, char **args){
 
     return 0;
 }
-int menu(int *op)
-{
+int menu(int *op){
     printf(" _______________________________ \n");
     printf("| 1 - Ler uma unidade           |\n");
     printf("| 2 - Mostrar todas as palavras |\n");
@@ -129,12 +166,7 @@ arv23Word *busca(arv23Word *arv, char *str){
     
 }
 
-
-void Tratamento(arv23Word **arv, char *var, char *promove, lista **lpromove, arv23Word **pai){
-    /*arv23Word *aux;
-    aux = (arv23Word *)malloc(sizeof(arv23Word));
-    aux->l1 = NULL; //Inicializando a lista
-    aux->l2 = NULL; //Inicializando a lista*/
+void insercaoListas(arv23Word **arv, char *var){
     int pos = 0;
     char ing[20];
 
@@ -159,16 +191,48 @@ void Tratamento(arv23Word **arv, char *var, char *promove, lista **lpromove, arv
         }
         pt[cont] = '\0';
         arv23Word *aux = busca(*arv,pt);
-        if(!aux){
-            insere(arv, pt, promove, lpromove, pai);
-            aux = busca(*arv,pt);
-        }
         if(compara(aux->word1, pt) == 0)
             insereLista(&(aux->l1),ing);
         else
             insereLista(&(aux->l2),ing);
     }
+}
 
+
+void Tratamento(arv23Word **arv, char *var, char *promove, lista **lpromove, arv23Word **pai){
+    int pos = 0;
+    char ing[20];
+
+    while(*var != ':'){
+        ing[pos] = *var;
+        var++;
+        pos++;
+    }
+
+    ing[pos]='\0';
+
+    var++;
+    
+    for(; *var != '\0' && *var!='\n' && *var != '\0' ; var++){
+        int cont = 0;
+        char pt[20];
+        for (int i = 0; i < 20; i++)
+            pt[i]='\0';
+        
+        for(; *var!=',' && *var!='\0'; var++, cont++){
+            pt[cont] = *var;
+        }
+        pt[cont] = '\0';
+        //arv23Word *aux = busca(*arv,pt);
+        //if(!aux){
+            insere(arv, pt, promove, lpromove, pai);
+            //aux = busca(*arv,pt);
+        //}
+        /* if(compara(aux->word1, pt) == 0)
+            insereLista(&(aux->l1),ing);
+        else
+            insereLista(&(aux->l2),ing); */
+    }
 
 }
 
