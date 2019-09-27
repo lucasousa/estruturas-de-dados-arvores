@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include<time.h>
 
 
 /* Lista para armazenar as palavras em inglês*/
@@ -29,6 +30,7 @@ void copiar(char *string1, char *string2);
 arvBinWord *buscaNo(arvBinWord *raiz, char *ch, arvBinWord **pai);
 arvBinWord *removerNo(arvBinWord *raiz, char *ch);
 void liberar(lista *l);
+void liberarArv(arvBinWord *arv);
 int menu(int *op);
 
 
@@ -37,7 +39,7 @@ int main(int argc, char **args){
     arvore = criaVazia();
     FILE *arquivo;
     char Unidade[50];
-    
+    clock_t finish, start;
     int p;
     while(menu(&p)){
         char palavra[30];
@@ -45,6 +47,7 @@ int main(int argc, char **args){
             case 1:
                 printf("Digite o nome do arquivo que contém a unidade >> ");scanf("%s",Unidade);
                 arquivo = fopen(Unidade, "r");
+                start = clock();
                 fscanf(arquivo,"%s",Unidade);
                 while(!feof(arquivo)){
                     char nfstr[100];
@@ -53,16 +56,27 @@ int main(int argc, char **args){
                     fscanf(arquivo, "%s" , nfstr);
                     Tratamento(&arvore,nfstr);
                 }
+                finish = clock();
+                printf("\nTempo de Busca da Árvore: %lf\n",(double)(finish-start)*1000/CLOCKS_PER_SEC);
             break;
             case 2:
                 imprime(arvore);
             break;
             case 3:
                 printf("Digite a palavra a ser buscada >> "); scanf("%s",palavra);
+                start = clock();
+                busca(arvore, palavra);
+                start = clock();
+                printf("\nTempo de busca da Árvore: %lf\n",(double)(finish-start)*1000/CLOCKS_PER_SEC);
             break;
             case 4:
                 printf("Digite a palavra a ser removida >> "); scanf("%s",palavra);
                 arvore = removerNo(arvore, palavra);
+            break;
+            case 5:
+                printf("árvore limpa com sucesso\n");
+                liberarArv(arvore);
+                arvore = NULL;
             break;
             default:
             break;
@@ -75,6 +89,12 @@ int main(int argc, char **args){
 
     return 0;
 }
+void liberarArv(arvBinWord *arv){
+    if(!arv) return;
+    liberarArv(arv->esq);
+    liberarArv(arv->dir);
+    free(arv);
+}
 
 int menu(int *op){
     printf(" _______________________________ \n");
@@ -82,6 +102,7 @@ int menu(int *op){
     printf("| 2 - Mostrar todas as palavras |\n");
     printf("| 3 - Buscar uma palavra        |\n");
     printf("| 4 - Remover uma palavra       |\n");
+    printf("| 5 - Limpar a árvore           |\n");
     printf("| 0 - Sair                      |\n");
     printf("|_______________________________|\n");
     scanf("%d",op);
