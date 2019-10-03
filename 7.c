@@ -14,7 +14,6 @@ typedef struct i{
 
 typedef struct arvAVL{
     bloco bl;
-    int fb;
     struct arvAVL *esq;
     struct arvAVL *dir;
 } arvAVL;
@@ -29,7 +28,6 @@ void liberar(arvAVL *arv);                  //
 int maxDep(arvAVL *arv);
 int minDep(arvAVL *arv);
 arvAVL *criaNo(int ini, int fim, char status);
-
 int temUmFilho(arvAVL *raiz);
 int ehFolha(arvAVL *raiz);
 arvAVL *maioresq(arvAVL *raiz, arvAVL **pai);
@@ -40,6 +38,7 @@ void imprime(arvAVL *arvore);
 int insere(arvAVL **raiz, arvAVL *No);           
 arvAVL *busca(arvAVL **arv, int tam, arvAVL **pai, char param);
 void insercao(arvAVL **raiz, arvAVL *No);
+void rebalancear(arvAVL **arv);
 
 int main(){
     arvAVL *raiz = criaVazia();
@@ -79,13 +78,27 @@ int main(){
             raiz = alteracao(&raiz, qt, 'L');
         else
             raiz = alteracao(&raiz, qt, 'O');
+        rebalancear(&raiz);
         printf("\n");
         imprime(raiz);
         printf("\n");
     }
-    
-
-
+}
+void rebalancear(arvAVL **arv){
+    int maxesq = maxDep((*arv)->esq);
+    int maxdir = maxDep((*arv)->dir);
+    if( maxdir-maxesq > 1){
+        if(maxDep((*arv)->dir->dir)>=maxDep((*arv)->dir->esq))
+            rotacaoRR(arv);
+        else
+            rotacaoRL(arv);
+    }
+    else if(maxdir-maxesq < -1){
+        if( maxDep((*arv)->esq->esq) >= maxDep((*arv)->esq->dir))
+            rotacaoLL(arv);
+        else
+            rotacaoLR(arv);
+    }
 }
 
 int insere(arvAVL **raiz, arvAVL *no){
@@ -188,8 +201,8 @@ arvAVL *alteracao(arvAVL **raiz, int tam, char param){
                 men->bl.ini-=tam;
                 men->bl.tam+=tam;
             }else{                 // bloco é igual ao tamanho requerido
-                aux->bl.fim+=tam;
-                aux->bl.tam+=tam;
+                aux->bl.fim=men->bl.fim;
+                aux->bl.tam=aux->bl.fim-aux->bl.ini+1;
                 alteraestado(&aux);
                 if(paiaux == aux)
                     aux->dir = aux->dir->dir;
@@ -209,8 +222,8 @@ arvAVL *alteracao(arvAVL **raiz, int tam, char param){
                 mai->bl.fim+=tam;
                 mai->bl.tam+=tam;
             }else{                 // bloco é igual ao tamanho requerido
-                aux->bl.ini-=tam;
-                aux->bl.tam+=tam;
+                aux->bl.ini = mai->bl.ini;
+                aux->bl.tam = aux->bl.fim - aux->bl.ini + 1;
                 alteraestado(&aux);
                 if(paiaux == aux)
                     aux->esq = aux->esq->esq;
@@ -229,7 +242,7 @@ arvAVL *alteracao(arvAVL **raiz, int tam, char param){
         }
         while(men->esq!=NULL){
             paiauxmen = men;
-            men=men->dir;
+            men=men->esq;
         }
         if(aux->bl.tam > tam){ // bloco é maior que o tamanho requerido
             aux->bl.ini+=tam;
@@ -276,7 +289,7 @@ int ehFolha(arvAVL *raiz){
 
 
 int temUmFilho(arvAVL *raiz){
-    if ( (!raiz->esq && raiz->dir) || (raiz->esq && !raiz->dir) ) return 1;
+    if ( (raiz->esq==NULL && raiz->dir) || (raiz->esq && raiz->dir==NULL) ) return 1;
     else return 0;
 }
 

@@ -3,7 +3,7 @@
 #include<time.h>
 #define BLACK 1
 #define RED 0
-#define TAM 15000
+#define TAM 1000
 
 
 typedef struct RubroNegra{
@@ -27,7 +27,6 @@ RubroNegra* busca(RubroNegra *arvore, int elem);
 void liberar(RubroNegra *arv);
 int maxDep(RubroNegra *arv);
 int minDep(RubroNegra *arv);
-
 
 int main(){
     srand(time(NULL));

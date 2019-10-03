@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
-#define TAM 15000
+#define TAM 1000
+
 
 typedef struct arvAVL{
     int info;
@@ -140,7 +141,6 @@ int insere(arvAVL **raiz, arvAVL *no){
         }
         else
             inseriu = 0;
-        (**raiz).fb = maiorAltura(*raiz);
     }
     return inseriu;
 }
@@ -185,10 +185,21 @@ int maxDep(arvAVL *arv){
             return he + 1;
     }
 }
+int minDepth(arvAVL *arv){
+    int he = 0;
+    int hd = 0;
+    int folha = -1;
+    if(arv!=NULL){
+        he = minDepth(arv->esq)+1;
+        hd = minDepth(arv->dir)+1;
+        if(he>hd) folha = hd;
+        else folha = he;
+    }
+    return folha;
+}
+
 int minDep(arvAVL *arv){
-    if (!arv)
-        return -1;
-    else{
+    if (arv!=NULL){
         int he = minDep(arv->esq);
         int hd = minDep(arv->dir);
         if (he > hd)
@@ -196,6 +207,7 @@ int minDep(arvAVL *arv){
         else
             return he + 1;
     }
+    return 0;
 }
 void liberar(arvAVL *arv){
     if (!arv)

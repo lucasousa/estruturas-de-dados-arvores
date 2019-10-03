@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#define TAM 15000
+#define TAM 1000
 
 typedef struct arvBin{
 	int info;
