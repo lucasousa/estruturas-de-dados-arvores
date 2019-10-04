@@ -1,0 +1,10 @@
+%UNIDADE
+egg:ovo
+scheme:programa,aplicativo
+beautiful:bonita,bela
+software:programa,aplicativo
+beer:cerveja,cachaca
+ugly:feio,horrivel
+bottle:garrafa,litro
+fruit:uva,pera
+apple:fruta
